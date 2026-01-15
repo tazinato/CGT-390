@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lab 2</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 2rem; line-height: 1.4; }
+    #title { margin-bottom: .5rem; }
+    ul { list-style: none; padding-left: 0; }
+    li { padding: .4rem .6rem; border: 1px solid #e5e5e5; border-radius: 8px; margin: .4rem 0; }
+    .done { text-decoration: line-through; opacity: .6; }
+  </style>
+</head>
+<body>
+  <h1 id="title">My Items (0)</h1>
+
+  <form id="addForm" autocomplete="off">
+    <input id="nameInput" type="text" placeholder="Add an item (e.g., Apples)" required />
+    <button type="submit">Add</button>
+    <button type="button" id="deleteLast">Delete Last</button>
+  </form>
+
+  <ul id="list"></ul>
+
+  <p><strong>Goal:</strong> Use an <em>array of objects</em>, write small <em>functions</em>, handle <em>events</em>, and update the <em>DOM</em>.</p>
+
+  <script>
+    // ===== Data: array of objects =====
+  // Each item: { id: number, name: string, color: string, done: boolean }
+  let items = [
+    { id: 1, name: "Apples",  color: "#e57373", done: false },
+    { id: 2, name: "Bananas", color: "#fff176", done: false },
+  ];
+  let nextId = 3;
+
+  // ===== DOM refs =====
+  const titleEl       = document.getElementById("title");
+  const listEl        = document.getElementById("list");
+  const addForm       = document.getElementById("addForm");
+  const nameInput     = document.getElementById("nameInput");
+  const btnDeleteLast = document.getElementById("deleteLast");
+
+  // ===== Functions =====
+  function randomColor() {
+    const n = Math.floor(Math.random() * 0xFFFFFF);
+    return "#" + n.toString(16).padStart(6, "0");
+  }
+
+  function updateTitle() {
+    // Set the title text to show the count, e.g., "My Items (N)"
+    titleEl.textContent = `My Items (${items.length})`;
+  }
+
+  function render() {
+    // Clear the list
+    listEl.innerHTML = "";
+
+    // Loop over items and create an <li> for each
+    for (const item of items) {
+      const li = document.createElement("li");
+      li.textContent = item.name;
+
+      if (item.done) {
+        li.classList.add("done");
+      }
+
+      li.dataset.id = item.id;
+      li.style.background = item.color;
+
+      listEl.appendChild(li);
+    }
+
+    // Update the title at the end
+    updateTitle();
+  }
+
+  // ===== Events =====
+  // 1) Add item on form submit
+  addForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    if (!name) return;
+
+    // Push new object into items
+    items.push({
+      id: nextId++,
+      name: name,
+      color: randomColor(),
+      done: false,
+    });
+
+    // Clear the input
+    nameInput.value = "";
+
+    // Re-render
+    render();
+  });
+
+  // 2) Delete last item on button click
+  btnDeleteLast.addEventListener("click", () => {
+    if (items.length > 0) {
+      items.pop();
+      render();
+    }
+  });
+
+  // 3) Toggle "done" by clicking an item (event delegation on the <ul>)
+  listEl.addEventListener("click", (e) => {
+    const li = e.target.closest("li");
+    if (!li) return;
+
+    const id = Number(li.dataset.id);
+    const item = items.find((it) => it.id === id);
+    if (!item) return;
+
+    item.done = !item.done;
+    render();
+  });
+
+  // Initial paint
+  render();
+  </script>
+</body>
+</html>
