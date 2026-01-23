@@ -1,22 +1,51 @@
 import "./App.css";
 import Header from "./components/Header";
 import Introduction from "./components/Introduction";
-import CardOne from "./components/Card1";
-import CardTwo from "./components/Card2";
+import Card from "./components/Card";
+import Section from "./components/Section";
+import buford1 from "./assets/buford1.jpg";
+import buford2 from "./assets/buford2.jpg";
 
 function App() {
+  const profiles = [
+    {
+      id: 1,
+      name: "Buford D. Dog",
+      year: "Junior",
+      major: "Toy Destruction, Minor in Wall Destruction",
+      isFeatured: true,
+      image: buford1
+    },
+    {
+      id: 2,
+      name: "Buford, Son of Buford",
+      year: "Senior",
+      major: "Peanut Butter Consumption",
+      isFeatured: false,
+      image: buford2
+    }
+  ];
+
   return (
     <div className="app">
       <Header />
       <main className="main-content">
         <Introduction />
-        <section className="cards-section">
-          <h2 className="cards-heading">Project Highlights</h2>
+
+        <Section title="Buford Varients">
           <div className="cards-grid">
-            <CardOne />
-            <CardTwo />
+            {profiles.map((profile) => (
+              <Card
+                key={profile.id}
+                name={profile.name}
+                year={profile.year}
+                major={profile.major}
+                isFeatured={profile.isFeatured}
+                image={profile.image}
+              />
+            ))}
           </div>
-        </section>
+        </Section>
       </main>
     </div>
   );

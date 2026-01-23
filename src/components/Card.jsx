@@ -1,16 +1,18 @@
-import buford1 from "../assets/buford1.jpg";
-import buford2 from "../assets/buford2.jpg";
-
-function Card({ title, description, tag, image }) {
-  const isHighlighted = tag === "React Basics";
-  const cardClass = isHighlighted ? "card card-highlight" : "card";
+function Card({ name, year, major, isFeatured, image }) {
+  const cardClass = isFeatured ? "card card-highlight" : "card";
 
   return (
     <article className={cardClass}>
-      <img className="card-image" src={image} alt={title} />
-      <h3 className="card-title">{title}</h3>
-      <p className="card-description">{description}</p>
-      <span className="card-tag">{tag}</span>
+      {image && (
+        <img className="card-image" src={image} alt={name} />
+      )}
+      <h3 className="card-title">{name}</h3>
+      <p className="card-description">
+        Year: {year} · Major: {major}
+      </p>
+      {isFeatured && (
+        <span className="card-tag">Featured</span>
+      )}
     </article>
   );
 }
