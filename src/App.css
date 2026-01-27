@@ -117,3 +117,48 @@
 .section-content {
   display: block;
 }
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-end;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  color: #e5e7eb;
+}
+
+.control-label {
+  margin-bottom: 0.25rem;
+}
+
+.controls select,
+.controls input {
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid #374151;
+  background-color: #020617;
+  color: #e5e7eb;
+}
+
+.reset-button {
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.45rem;
+  border: 1px solid #ef4444;
+  background-color: #b91c1c;
+  color: #f9fafb;
+  cursor: pointer;
+}
+
+.reset-button:hover {
+  background-color: #dc2626;
+}
+
+.no-results {
+  margin-top: 1rem;
+  color: #9ca3af;
+}
