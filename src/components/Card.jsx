@@ -1,17 +1,30 @@
-function Card({ name, year, major, isFeatured, image }) {
-  const cardClass = isFeatured ? "card card-highlight" : "card";
+import styles from "./Card.module.css";
+
+function Card({ name, title, year, major, isFeatured, image, mode }) {
+  const isDark = mode === "dark";
+
+  const cardClassNames = [
+    styles.card,
+    isDark ? styles.cardDark : "",
+    isFeatured ? styles.cardHighlight : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <article className={cardClass}>
+    <article className={cardClassNames}>
       {image && (
-        <img className="card-image" src={image} alt={name} />
+        <img className={styles.cardImage} src={image} alt={name} />
       )}
-      <h3 className="card-title">{name}</h3>
-      <p className="card-description">
+      <h3 className={styles.cardTitle}>{name}</h3>
+      {title && (
+        <p className={styles.cardSubtitle}>{title}</p>
+      )}
+      <p className={styles.cardDescription}>
         Year: {year} · Major: {major}
       </p>
       {isFeatured && (
-        <span className="card-tag">Featured</span>
+        <span className={styles.cardTag}>Featured</span>
       )}
     </article>
   );

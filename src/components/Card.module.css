@@ -1,0 +1,43 @@
+.card {
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  border: 1px solid #1f2937;
+  background-color: #f9fafb;
+  color: #111827;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cardDark {
+  background-color: #020617;
+  color: #e5e7eb;
+  border-color: #374151;
+}
+
+.cardHighlight {
+  box-shadow: 0 0 0 2px #38bdf8;
+}
+
+.cardTitle {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.cardSubtitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.cardDescription {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.cardImage {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+}
