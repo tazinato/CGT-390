@@ -4,46 +4,61 @@ import Header from "./components/Header";
 import Introduction from "./components/Introduction";
 import Card from "./components/Card";
 import Section from "./components/Section";
+import AddProfile from "./components/AddProfile"; // NEW
 import buford1 from "./assets/buford1.jpg";
 import buford2 from "./assets/buford2.jpg";
 
 function App() {
-  const profiles = [
+  // Lift profiles to state so AddProfile can modify
+  const [profiles, setProfiles] = useState([
     {
       id: 1,
       name: "Buford D. Dog",
-      title: "Student", // NEW
+      title: "Student",
       year: "Junior",
       major: "Toy Destruction, Minor in Wall Destruction",
+      email: "buford@paw.edu",
+      bio: "Expert in chew toy engineering and wall demolition",
       isFeatured: true,
       image: buford1
     },
     {
       id: 2,
       name: "Buford, Son of Buford",
-      title: "Alumni", // NEW
+      title: "Alumni",
       year: "Senior",
       major: "Peanut Butter Consumption",
+      email: "bufordjr@paw.edu",
+      bio: "World record holder in peanut butter licking",
       isFeatured: false,
       image: buford2
     }
-  ];
+  ]);
 
   const [selectedTitle, setSelectedTitle] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  const [mode, setMode] = useState("light"); // NEW
+  const [mode, setMode] = useState("light");
 
   const isDark = mode === "dark";
-
   const titles = ["All", ...new Set(profiles.map((p) => p.title))];
 
+  // Add new profile from form
+  const handleAddProfile = (newProfile) => {
+    setProfiles((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        ...newProfile,
+        year: "N/A", // Default values to match existing profiles
+        major: "N/A",
+        isFeatured: false
+      }
+    ]);
+  };
+
   const filteredProfiles = profiles.filter((profile) => {
-    const matchesTitle =
-      selectedTitle === "All" || profile.title === selectedTitle;
-
-    const matchesSearch =
-      profile.name.toLowerCase().includes(searchTerm.toLowerCase());
-
+    const matchesTitle = selectedTitle === "All" || profile.title === selectedTitle;
+    const matchesSearch = profile.name.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTitle && matchesSearch;
   });
 
@@ -70,9 +85,10 @@ function App() {
 
         <Introduction />
 
-        <Section
-          title={isDark ? "Buford Variants (Dark Mode)" : "Buford Variants"}
-        >
+        {/* NEW: Add Profile Form */}
+        <AddProfile onAddProfile={handleAddProfile} />
+
+        <Section title={isDark ? "Buford Variants (Dark Mode)" : "Buford Variants"}>
           <div className="controls">
             <label className="control-group">
               <span className="control-label">Filter by title:</span>
@@ -113,7 +129,7 @@ function App() {
                 major={profile.major}
                 isFeatured={profile.isFeatured}
                 image={profile.image}
-                mode={mode} // pass mode down
+                mode={mode}
               />
             ))}
             {filteredProfiles.length === 0 && (
