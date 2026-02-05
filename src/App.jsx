@@ -1,24 +1,74 @@
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "./components/Header";
 import Introduction from "./components/Introduction";
 import Card from "./components/Card";
 import Section from "./components/Section";
-import AddProfile from "./components/AddProfile"; // NEW
 import buford1 from "./assets/buford1.jpg";
 import buford2 from "./assets/buford2.jpg";
 
 function App() {
-  // Lift profiles to state so AddProfile can modify
-  const [profiles, setProfiles] = useState([
+  const [profiles, setProfiles] = useState([]);
+  const [titles, setTitles] = useState(["All"]);
+  const [selectedTitle, setSelectedTitle] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mode, setMode] = useState("light");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const isDark = mode === "dark";
+
+  useEffect(() => {
+    fetchTitles();
+  }, []);
+
+  useEffect(() => {
+    fetchProfiles();
+  }, [selectedTitle, searchTerm]);
+
+  const fetchTitles = async () => {
+    try {
+      const response = await fetch(
+        "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php"
+      );
+      const data = await response.json();
+      setTitles(["All", ...data]);
+    } catch (err) {
+      console.error("Error fetching titles:", err);
+    }
+  };
+
+  const fetchProfiles = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const params = new URLSearchParams({
+        title: selectedTitle === "All" ? "" : selectedTitle,
+        name: searchTerm,
+        page: "1",
+        limit: "50"
+      });
+      
+      const response = await fetch(
+        `https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`
+      );
+      const data = await response.json();
+      setProfiles(data);
+    } catch (err) {
+      setError("Failed to fetch profiles. Please try again.");
+      console.error("Error fetching profiles:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fallbackProfiles = [
     {
       id: 1,
       name: "Buford D. Dog",
       title: "Student",
       year: "Junior",
-      major: "Toy Destruction, Minor in Wall Destruction",
-      email: "buford@paw.edu",
-      bio: "Expert in chew toy engineering and wall demolition",
+      major: "Toy Destruction",
       isFeatured: true,
       image: buford1
     },
@@ -28,39 +78,12 @@ function App() {
       title: "Alumni",
       year: "Senior",
       major: "Peanut Butter Consumption",
-      email: "bufordjr@paw.edu",
-      bio: "World record holder in peanut butter licking",
       isFeatured: false,
       image: buford2
     }
-  ]);
+  ];
 
-  const [selectedTitle, setSelectedTitle] = useState("All");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [mode, setMode] = useState("light");
-
-  const isDark = mode === "dark";
-  const titles = ["All", ...new Set(profiles.map((p) => p.title))];
-
-  // Add new profile from form
-  const handleAddProfile = (newProfile) => {
-    setProfiles((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        ...newProfile,
-        year: "N/A", // Default values to match existing profiles
-        major: "N/A",
-        isFeatured: false
-      }
-    ]);
-  };
-
-  const filteredProfiles = profiles.filter((profile) => {
-    const matchesTitle = selectedTitle === "All" || profile.title === selectedTitle;
-    const matchesSearch = profile.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesTitle && matchesSearch;
-  });
+  const filteredProfiles = profiles.length > 0 ? profiles : fallbackProfiles;
 
   const handleReset = () => {
     setSelectedTitle("All");
@@ -71,11 +94,20 @@ function App() {
     setMode((prev) => (prev === "light" ? "dark" : "light"));
   };
 
+  if (loading) {
+    return (
+      <div className={`app ${isDark ? "app-dark" : "app-light"}`}>
+        <div style={{ textAlign: "center", padding: "50px" }}>
+          <h2>Loading profiles...</h2>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={isDark ? "app app-dark" : "app app-light"}>
       <Header />
       <main className="main-content">
-        {/* Mode toggle bar */}
         <div className="mode-bar">
           <span>Mode: {isDark ? "Dark" : "Light"}</span>
           <button className="mode-button" onClick={toggleMode}>
@@ -85,10 +117,20 @@ function App() {
 
         <Introduction />
 
-        {/* NEW: Add Profile Form */}
-        <AddProfile onAddProfile={handleAddProfile} />
+        {error && (
+          <div style={{ 
+            background: "#f8d7da", 
+            color: "#721c24", 
+            padding: "15px", 
+            margin: "20px 0", 
+            borderRadius: "4px", 
+            textAlign: "center" 
+          }}>
+            {error}
+          </div>
+        )}
 
-        <Section title={isDark ? "Buford Variants (Dark Mode)" : "Buford Variants"}>
+        <Section title={isDark ? "Profiles (Dark Mode)" : "Profiles"}>
           <div className="controls">
             <label className="control-group">
               <span className="control-label">Filter by title:</span>
@@ -122,17 +164,17 @@ function App() {
           <div className="cards-grid">
             {filteredProfiles.map((profile) => (
               <Card
-                key={profile.id}
+                key={profile.id || profile.name}
                 name={profile.name}
                 title={profile.title}
                 year={profile.year}
                 major={profile.major}
                 isFeatured={profile.isFeatured}
-                image={profile.image}
+                image={profile.image || buford1}
                 mode={mode}
               />
             ))}
-            {filteredProfiles.length === 0 && (
+            {filteredProfiles.length === 0 && !loading && (
               <p className="no-results">No profiles match your filters.</p>
             )}
           </div>
