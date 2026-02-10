@@ -54,8 +54,6 @@ const AddProfile = ({ onAddProfile }) => {
     
     if (validateForm()) {
       setIsSubmitting(true);
-      
-      // Simulate API call
       setTimeout(() => {
         onAddProfile(formData);
         setFormData({ name: "", email: "", title: "", bio: "", image: "" });

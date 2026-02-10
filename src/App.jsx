@@ -1,66 +1,27 @@
 import "./App.css";
 import { useState, useEffect } from "react";
+import { Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Introduction from "./components/Introduction";
 import Card from "./components/Card";
 import Section from "./components/Section";
+import AddProfile from "./components/Pages/AddProfile";
 import buford1 from "./assets/buford1.jpg";
 import buford2 from "./assets/buford2.jpg";
-
-function App() {
-  const [profiles, setProfiles] = useState([]);
-  const [titles, setTitles] = useState(["All"]);
-  const [selectedTitle, setSelectedTitle] = useState("All");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [mode, setMode] = useState("light");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
+import About from "./components/Pages/About";
+function Home({
+  profiles,
+  titles,
+  selectedTitle,
+  setSelectedTitle,
+  searchTerm,
+  setSearchTerm,
+  mode,
+  loading,
+  error,
+  handleReset
+}) {
   const isDark = mode === "dark";
-
-  useEffect(() => {
-    fetchTitles();
-  }, []);
-
-  useEffect(() => {
-    fetchProfiles();
-  }, [selectedTitle, searchTerm]);
-
-  const fetchTitles = async () => {
-    try {
-      const response = await fetch(
-        "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php"
-      );
-      const data = await response.json();
-      setTitles(["All", ...data]);
-    } catch (err) {
-      console.error("Error fetching titles:", err);
-    }
-  };
-
-  const fetchProfiles = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const params = new URLSearchParams({
-        title: selectedTitle === "All" ? "" : selectedTitle,
-        name: searchTerm,
-        page: "1",
-        limit: "50"
-      });
-      
-      const response = await fetch(
-        `https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`
-      );
-      const data = await response.json();
-      setProfiles(data);
-    } catch (err) {
-      setError("Failed to fetch profiles. Please try again.");
-      console.error("Error fetching profiles:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fallbackProfiles = [
     {
@@ -85,15 +46,6 @@ function App() {
 
   const filteredProfiles = profiles.length > 0 ? profiles : fallbackProfiles;
 
-  const handleReset = () => {
-    setSelectedTitle("All");
-    setSearchTerm("");
-  };
-
-  const toggleMode = () => {
-    setMode((prev) => (prev === "light" ? "dark" : "light"));
-  };
-
   if (loading) {
     return (
       <div className={`app ${isDark ? "app-dark" : "app-light"}`}>
@@ -103,6 +55,186 @@ function App() {
       </div>
     );
   }
+
+  return (
+    <>
+      <Introduction />
+
+      {error && (
+        <div
+          style={{
+            background: "#f8d7da",
+            color: "#721c24",
+            padding: "15px",
+            margin: "20px 0",
+            borderRadius: "4px",
+            textAlign: "center"
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      <Section title={isDark ? "Profiles (Dark Mode)" : "Profiles"}>
+        <div className="controls">
+          <label className="control-group">
+            <span className="control-label">Filter by title:</span>
+            <select
+              value={selectedTitle}
+              onChange={(e) => setSelectedTitle(e.target.value)}
+            >
+              {titles.map((title) => (
+                <option key={title} value={title}>
+                  {title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="control-group">
+            <span className="control-label">Search by name:</span>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Type a name..."
+            />
+          </label>
+
+          <button className="reset-button" onClick={handleReset}>
+            Reset
+          </button>
+        </div>
+
+        <div className="cards-grid">
+          {filteredProfiles.map((profile) => (
+            <Card
+              key={profile.id || profile.name}
+              name={profile.name}
+              title={profile.title}
+              year={profile.year}
+              major={profile.major}
+              isFeatured={profile.isFeatured}
+              image={profile.image || buford1}
+              mode={mode}
+            />
+          ))}
+          {filteredProfiles.length === 0 && !loading && (
+            <p className="no-results">No profiles match your filters.</p>
+          )}
+        </div>
+      </Section>
+    </>
+  );
+}
+
+function OtherProfiles() {
+  return (
+    <main className="main-content">
+      <Section title="Other Profiles">
+        <p>
+          This page is reserved for additional profiles or future data sources.
+        </p>
+      </Section>
+    </main>
+  );
+}
+
+function NotFound() {
+  return (
+    <main className="main-content">
+      <Section title="Page Not Found">
+        <p>The page you are looking for does not exist.</p>
+      </Section>
+    </main>
+  );
+}
+
+function App() {
+  const [profiles, setProfiles] = useState([]);
+  const [titles, setTitles] = useState(["All"]);
+  const [selectedTitle, setSelectedTitle] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mode, setMode] = useState("light");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const isDark = mode === "dark";
+
+  useEffect(() => {
+    fetchTitles();
+  }, []);
+
+  useEffect(() => {
+    fetchProfiles();
+  }, [selectedTitle, searchTerm]);
+
+  const fetchTitles = async () => {
+  try {
+    const response = await fetch(
+      "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php"
+    );
+    const data = await response.json();
+    
+  
+    if (Array.isArray(data)) {
+      setTitles(["All", ...data]);
+    } else {
+      console.warn("Titles data is not an array:", data);
+      setTitles(["All"]);
+    }
+  } catch (err) {
+    console.error("Error fetching titles:", err);
+    setTitles(["All"]);
+  }
+};
+
+
+  const fetchProfiles = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const params = new URLSearchParams({
+        title: selectedTitle === "All" ? "" : selectedTitle,
+        name: searchTerm,
+        page: "1",
+        limit: "50"
+      });
+
+      const response = await fetch(
+        `https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`
+      );
+      const data = await response.json();
+      setProfiles(data);
+    } catch (err) {
+      setError("Failed to fetch profiles. Please try again.");
+      console.error("Error fetching profiles:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setSelectedTitle("All");
+    setSearchTerm("");
+  };
+
+  const toggleMode = () => {
+    setMode((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  const handleAddProfile = (profile) => {
+    setProfiles((prev) => [
+      ...prev,
+      {
+        ...profile,
+        id: Date.now(),
+        year: profile.year || "N/A",
+        major: profile.bio || "N/A",
+        isFeatured: false
+      }
+    ]);
+  };
 
   return (
     <div className={isDark ? "app app-dark" : "app app-light"}>
@@ -115,70 +247,32 @@ function App() {
           </button>
         </div>
 
-        <Introduction />
-
-        {error && (
-          <div style={{ 
-            background: "#f8d7da", 
-            color: "#721c24", 
-            padding: "15px", 
-            margin: "20px 0", 
-            borderRadius: "4px", 
-            textAlign: "center" 
-          }}>
-            {error}
-          </div>
-        )}
-
-        <Section title={isDark ? "Profiles (Dark Mode)" : "Profiles"}>
-          <div className="controls">
-            <label className="control-group">
-              <span className="control-label">Filter by title:</span>
-              <select
-                value={selectedTitle}
-                onChange={(e) => setSelectedTitle(e.target.value)}
-              >
-                {titles.map((title) => (
-                  <option key={title} value={title}>
-                    {title}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="control-group">
-              <span className="control-label">Search by name:</span>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Type a name..."
-              />
-            </label>
-
-            <button className="reset-button" onClick={handleReset}>
-              Reset
-            </button>
-          </div>
-
-          <div className="cards-grid">
-            {filteredProfiles.map((profile) => (
-              <Card
-                key={profile.id || profile.name}
-                name={profile.name}
-                title={profile.title}
-                year={profile.year}
-                major={profile.major}
-                isFeatured={profile.isFeatured}
-                image={profile.image || buford1}
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Home
+                profiles={profiles}
+                titles={titles}
+                selectedTitle={selectedTitle}
+                setSelectedTitle={setSelectedTitle}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
                 mode={mode}
+                loading={loading}
+                error={error}
+                handleReset={handleReset}
               />
-            ))}
-            {filteredProfiles.length === 0 && !loading && (
-              <p className="no-results">No profiles match your filters.</p>
-            )}
-          </div>
-        </Section>
+            }
+          />
+          <Route
+            path="/add"
+            element={<AddProfile onAddProfile={handleAddProfile} />}
+          />
+          <Route path="/about" element={<About mode={mode} />} />
+          <Route path="/other-profiles" element={<OtherProfiles />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </main>
     </div>
   );
