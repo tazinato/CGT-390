@@ -1,6 +1,7 @@
 import Section from "../components/Section";
 import Card from "../components/Card";
 import Introduction from "../components/Introduction";
+import { Link } from "react-router-dom";
 
 function Home({ 
   profiles, 
@@ -24,7 +25,7 @@ function Home({
       year: "Junior",
       major: "Toy Destruction",
       isFeatured: true,
-      image: "buford1.jpg" // or import if needed
+      image: "buford1.jpg"
     },
     {
       id: 2,
@@ -81,16 +82,26 @@ function Home({
 
         <div className="cards-grid">
           {filteredProfiles.map((profile) => (
-            <Card
+            <Link 
               key={profile.id || profile.name}
-              name={profile.name}
-              title={profile.title}
-              year={profile.year}
-              major={profile.major}
-              isFeatured={profile.isFeatured}
-              image={profile.image || "buford1.jpg"}
-              mode={mode}
-            />
+              to={`/profile/${profile.id}`}
+              className="profile-link"
+              style={{ 
+                textDecoration: "none", 
+                color: "inherit",
+                display: "block"
+              }}
+            >
+              <Card
+                name={profile.name}
+                title={profile.title}
+                year={profile.year}
+                major={profile.major}
+                isFeatured={profile.isFeatured}
+                image={profile.image || "buford1.jpg"}
+                mode={mode}
+              />
+            </Link>
           ))}
           {filteredProfiles.length === 0 && !loading && (
             <p className="no-results">No profiles match your filters.</p>

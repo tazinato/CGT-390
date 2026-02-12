@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AddProfile = ({ onAddProfile }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -59,7 +61,6 @@ const AddProfile = ({ onAddProfile }) => {
 
     setIsSubmitting(true);
     setTimeout(() => {
-      // Make onAddProfile optional so the page still works alone
       if (typeof onAddProfile === "function") {
         onAddProfile(formData);
       }
@@ -73,6 +74,10 @@ const AddProfile = ({ onAddProfile }) => {
       setSuccessMsg("Profile added successfully!");
       setIsSubmitting(false);
       setErrors({});
+
+      setTimeout(() => {
+        navigate("/"); 
+      }, 1500); 
     }, 1000);
   };
 

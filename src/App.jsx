@@ -1,14 +1,17 @@
 import "./App.css";
 import { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Outlet, useNavigate, useParams } from "react-router-dom";
 import Header from "./components/Header";
 import Introduction from "./components/Introduction";
 import Card from "./components/Card";
 import Section from "./components/Section";
 import AddProfile from "./components/Pages/AddProfile";
+import ProfileLayout from "./components/ProfileLayout";
+import ProfileDetail from "./components/ProfileDetail";
 import buford1 from "./assets/buford1.jpg";
 import buford2 from "./assets/buford2.jpg";
 import About from "./components/Pages/About";
+
 function Home({
   profiles,
   titles,
@@ -117,6 +120,7 @@ function Home({
               isFeatured={profile.isFeatured}
               image={profile.image || buford1}
               mode={mode}
+              profileId={profile.id} 
             />
           ))}
           {filteredProfiles.length === 0 && !loading && (
@@ -150,6 +154,38 @@ function NotFound() {
   );
 }
 
+function ProfilesLayout() {
+  const navigate = useNavigate();
+
+  const handleGoBack = () => {
+    navigate("/");
+  };
+
+  return (
+    <div className="profile-layout-container">
+      <button 
+        onClick={handleGoBack} 
+        className="go-back-button"
+        style={{
+          background: "#007bff",
+          color: "white",
+          border: "none",
+          padding: "10px 20px",
+          borderRadius: "5px",
+          cursor: "pointer",
+          marginBottom: "20px",
+          fontSize: "16px"
+        }}
+      >
+        ← Go Back to Home
+      </button>
+      <main>
+        <Outlet /> {/* Renders ProfileDetail */}
+      </main>
+    </div>
+  );
+}
+
 function App() {
   const [profiles, setProfiles] = useState([]);
   const [titles, setTitles] = useState(["All"]);
@@ -170,25 +206,25 @@ function App() {
   }, [selectedTitle, searchTerm]);
 
   const fetchTitles = async () => {
-  try {
-    const response = await fetch(
-      "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php"
-    );
-    const data = await response.json();
-    
-  
-    if (Array.isArray(data)) {
-      setTitles(["All", ...data]);
-    } else {
-      console.warn("Titles data is not an array:", data);
+    try {
+      const response = await fetch(
+        "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php"
+      );
+      const data = await response.json();
+      
+      let titlesArray = ["All"];
+      if (data && Array.isArray(data.titles)) {
+        titlesArray = ["All", ...data.titles];
+      } else if (Array.isArray(data)) {
+        titlesArray = ["All", ...data];
+      }
+      
+      setTitles(titlesArray);
+    } catch (err) {
+      console.error("Error fetching titles:", err);
       setTitles(["All"]);
     }
-  } catch (err) {
-    console.error("Error fetching titles:", err);
-    setTitles(["All"]);
-  }
-};
-
+  };
 
   const fetchProfiles = async () => {
     setLoading(true);
@@ -205,9 +241,10 @@ function App() {
         `https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`
       );
       const data = await response.json();
-      setProfiles(data);
+      setProfiles(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("Failed to fetch profiles. Please try again.");
+      setProfiles([]);
       console.error("Error fetching profiles:", err);
     } finally {
       setLoading(false);
@@ -224,16 +261,19 @@ function App() {
   };
 
   const handleAddProfile = (profile) => {
-    setProfiles((prev) => [
-      ...prev,
-      {
-        ...profile,
-        id: Date.now(),
-        year: profile.year || "N/A",
-        major: profile.bio || "N/A",
-        isFeatured: false
-      }
-    ]);
+    setProfiles((prev) => {
+      const currentProfiles = Array.isArray(prev) ? prev : [];
+      return [
+        ...currentProfiles,
+        {
+          ...profile,
+          id: Date.now(),
+          year: profile.year || "N/A",
+          major: profile.bio || "N/A",
+          isFeatured: false
+        }
+      ];
+    });
   };
 
   return (
@@ -265,12 +305,15 @@ function App() {
               />
             }
           />
-          <Route
-            path="/add"
-            element={<AddProfile onAddProfile={handleAddProfile} />}
-          />
+          <Route path="/add" element={<AddProfile onAddProfile={handleAddProfile} />} />
           <Route path="/about" element={<About mode={mode} />} />
           <Route path="/other-profiles" element={<OtherProfiles />} />
+          
+          {/* NESTED ROUTE: /profiles/:id */}
+          <Route path="/profiles" element={<ProfilesLayout />}>
+            <Route path=":id" element={<ProfileDetail />} />
+          </Route>
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
