@@ -2,20 +2,23 @@ import Section from "../components/Section";
 import Card from "../components/Card";
 import Introduction from "../components/Introduction";
 import { Link } from "react-router-dom";
+import { useProfiles } from "../Context/ProfilesContext";
+import { useModeContext } from "../Context/ModeContext";
 
-function Home({ 
-  profiles, 
-  titles, 
-  selectedTitle, 
-  setSelectedTitle, 
-  searchTerm, 
-  setSearchTerm, 
-  mode, 
-  loading, 
-  error, 
-  handleReset 
-}) {
-  const isDark = mode === "dark";
+function Home() {
+  const {
+    profiles,
+    titles,
+    selectedTitle,
+    setSelectedTitle,
+    searchTerm,
+    setSearchTerm,
+    loading,
+    error,
+    handleReset
+  } = useProfiles();
+
+  const { mode, isDark } = useModeContext();
 
   const fallbackProfiles = [
     {
@@ -58,7 +61,6 @@ function Home({
       )}
 
       <Section title={isDark ? "Profiles (Dark Mode)" : "Profiles"}>
-        {/* Filters */}
         <div className="controls">
           <label className="control-group">
             <span>Filter by title:</span>

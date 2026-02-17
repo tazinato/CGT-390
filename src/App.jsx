@@ -1,5 +1,5 @@
 import "./App.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, createContext, useContext } from "react";
 import { Routes, Route, Outlet, useNavigate, useParams } from "react-router-dom";
 import Header from "./components/Header";
 import Introduction from "./components/Introduction";
@@ -11,6 +11,26 @@ import ProfileDetail from "./components/ProfileDetail";
 import buford1 from "./assets/buford1.jpg";
 import buford2 from "./assets/buford2.jpg";
 import About from "./components/Pages/About";
+
+const ModeContext = createContext();
+
+function ModeProvider({ children }) {
+  const [mode, setMode] = useState("light");
+  const isDark = mode === "dark";
+
+  const toggleMode = () => {
+    setMode(prev => (prev === "light" ? "dark" : "light"));
+  };
+
+  const value = { mode, isDark, toggleMode };
+  return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>;
+}
+
+function useModeContext() {
+  const ctx = useContext(ModeContext);
+  if (!ctx) throw new Error("useModeContext must be used within ModeProvider");
+  return ctx;
+}
 
 function Home({
   profiles,
@@ -47,7 +67,16 @@ function Home({
     }
   ];
 
-  const filteredProfiles = profiles.length > 0 ? profiles : fallbackProfiles;
+  const allProfiles = profiles.length > 0 ? profiles : fallbackProfiles;
+
+  const filteredProfiles = allProfiles
+    .filter(profile =>
+      selectedTitle === "All" ? true : profile.title === selectedTitle
+    )
+    .filter(profile =>
+      profile.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   if (loading) {
     return (
@@ -120,7 +149,7 @@ function Home({
               isFeatured={profile.isFeatured}
               image={profile.image || buford1}
               mode={mode}
-              profileId={profile.id} 
+              profileId={profile.id}
             />
           ))}
           {filteredProfiles.length === 0 && !loading && (
@@ -163,8 +192,8 @@ function ProfilesLayout() {
 
   return (
     <div className="profile-layout-container">
-      <button 
-        onClick={handleGoBack} 
+      <button
+        onClick={handleGoBack}
         className="go-back-button"
         style={{
           background: "#007bff",
@@ -180,22 +209,21 @@ function ProfilesLayout() {
         ← Go Back to Home
       </button>
       <main>
-        <Outlet /> {/* Renders ProfileDetail */}
+        <Outlet />
       </main>
     </div>
   );
 }
 
-function App() {
+function AppInner() {
   const [profiles, setProfiles] = useState([]);
   const [titles, setTitles] = useState(["All"]);
   const [selectedTitle, setSelectedTitle] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  const [mode, setMode] = useState("light");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const isDark = mode === "dark";
+  const { mode, isDark, toggleMode } = useModeContext();
 
   useEffect(() => {
     fetchTitles();
@@ -211,14 +239,14 @@ function App() {
         "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php"
       );
       const data = await response.json();
-      
+
       let titlesArray = ["All"];
       if (data && Array.isArray(data.titles)) {
         titlesArray = ["All", ...data.titles];
       } else if (Array.isArray(data)) {
         titlesArray = ["All", ...data];
       }
-      
+
       setTitles(titlesArray);
     } catch (err) {
       console.error("Error fetching titles:", err);
@@ -254,10 +282,6 @@ function App() {
   const handleReset = () => {
     setSelectedTitle("All");
     setSearchTerm("");
-  };
-
-  const toggleMode = () => {
-    setMode((prev) => (prev === "light" ? "dark" : "light"));
   };
 
   const handleAddProfile = (profile) => {
@@ -308,16 +332,21 @@ function App() {
           <Route path="/add" element={<AddProfile onAddProfile={handleAddProfile} />} />
           <Route path="/about" element={<About mode={mode} />} />
           <Route path="/other-profiles" element={<OtherProfiles />} />
-          
-          {/* NESTED ROUTE: /profiles/:id */}
           <Route path="/profiles" element={<ProfilesLayout />}>
             <Route path=":id" element={<ProfileDetail />} />
           </Route>
-          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ModeProvider>
+      <AppInner />
+    </ModeProvider>
   );
 }
 
