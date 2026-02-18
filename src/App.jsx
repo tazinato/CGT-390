@@ -233,51 +233,51 @@ function AppInner() {
     fetchProfiles();
   }, [selectedTitle, searchTerm]);
 
-  const fetchTitles = async () => {
-    try {
-      const response = await fetch(
-        "https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php"
-      );
-      const data = await response.json();
-
+  const fetchTitles = () => {
+  fetch("https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php")
+    .then((response) => response.json())
+    .then((data) => {
       let titlesArray = ["All"];
       if (data && Array.isArray(data.titles)) {
         titlesArray = ["All", ...data.titles];
       } else if (Array.isArray(data)) {
         titlesArray = ["All", ...data];
       }
-
       setTitles(titlesArray);
-    } catch (err) {
+    })
+    .catch((err) => {
       console.error("Error fetching titles:", err);
       setTitles(["All"]);
-    }
-  };
+    });
+};
 
-  const fetchProfiles = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const params = new URLSearchParams({
-        title: selectedTitle === "All" ? "" : selectedTitle,
-        name: searchTerm,
-        page: "1",
-        limit: "50"
-      });
+  const fetchProfiles = () => {
+  setLoading(true);
+  setError("");
 
-      const response = await fetch(
-        `https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`
-      );
-      const data = await response.json();
+  const params = new URLSearchParams({
+    title: selectedTitle === "All" ? "" : selectedTitle,
+    name: searchTerm,
+    page: "1",
+    limit: "50",
+  });
+
+  fetch(
+    `https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`
+  )
+    .then((response) => response.json())
+    .then((data) => {
       setProfiles(Array.isArray(data) ? data : []);
-    } catch (err) {
+    })
+    .catch((err) => {
+      console.error("Error fetching profiles:", err);
       setError("Failed to fetch profiles. Please try again.");
       setProfiles([]);
-      console.error("Error fetching profiles:", err);
-    } finally {
+    })
+    .finally(() => {
       setLoading(false);
-    }
-  };
+    });
+};
 
   const handleReset = () => {
     setSelectedTitle("All");
