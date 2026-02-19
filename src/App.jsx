@@ -216,14 +216,15 @@ function ProfilesLayout() {
 }
 
 function AppInner() {
+  const { mode, isDark, toggleMode } = useModeContext();
+
+  // All state and logic moved to AppInner
   const [profiles, setProfiles] = useState([]);
   const [titles, setTitles] = useState(["All"]);
   const [selectedTitle, setSelectedTitle] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const { mode, isDark, toggleMode } = useModeContext();
 
   useEffect(() => {
     fetchTitles();
@@ -234,50 +235,50 @@ function AppInner() {
   }, [selectedTitle, searchTerm]);
 
   const fetchTitles = () => {
-  fetch("https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php")
-    .then((response) => response.json())
-    .then((data) => {
-      let titlesArray = ["All"];
-      if (data && Array.isArray(data.titles)) {
-        titlesArray = ["All", ...data.titles];
-      } else if (Array.isArray(data)) {
-        titlesArray = ["All", ...data];
-      }
-      setTitles(titlesArray);
-    })
-    .catch((err) => {
-      console.error("Error fetching titles:", err);
-      setTitles(["All"]);
-    });
-};
+    fetch("https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php")
+      .then((response) => response.json())
+      .then((data) => {
+        let titlesArray = ["All"];
+        if (data && Array.isArray(data.titles)) {
+          titlesArray = ["All", ...data.titles];
+        } else if (Array.isArray(data)) {
+          titlesArray = ["All", ...data];
+        }
+        setTitles(titlesArray);
+      })
+      .catch((err) => {
+        console.error("Error fetching titles:", err);
+        setTitles(["All"]);
+      });
+  };
 
   const fetchProfiles = () => {
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  const params = new URLSearchParams({
-    title: selectedTitle === "All" ? "" : selectedTitle,
-    name: searchTerm,
-    page: "1",
-    limit: "50",
-  });
-
-  fetch(
-    `https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`
-  )
-    .then((response) => response.json())
-    .then((data) => {
-      setProfiles(Array.isArray(data) ? data : []);
-    })
-    .catch((err) => {
-      console.error("Error fetching profiles:", err);
-      setError("Failed to fetch profiles. Please try again.");
-      setProfiles([]);
-    })
-    .finally(() => {
-      setLoading(false);
+    const params = new URLSearchParams({
+      title: selectedTitle === "All" ? "" : selectedTitle,
+      name: searchTerm,
+      page: "1",
+      limit: "50",
     });
-};
+
+    fetch(
+      `https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        setProfiles(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => {
+        console.error("Error fetching profiles:", err);
+        setError("Failed to fetch profiles. Please try again.");
+        setProfiles([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   const handleReset = () => {
     setSelectedTitle("All");
