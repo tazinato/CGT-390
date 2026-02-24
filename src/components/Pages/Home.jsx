@@ -1,9 +1,12 @@
-import Section from "../components/Section";
-import Card from "../components/Card";
-import Introduction from "../components/Introduction";
 import { Link } from "react-router-dom";
-import { useProfiles } from "../Context/ProfilesContext";
-import { useModeContext } from "../Context/ModeContext";
+import { useMemo } from "react";
+import Section from "../Section";
+import Card from "../Card";
+import Introduction from "../Introduction";
+import { useProfiles } from "../../Context/ProfilesContext";
+import { useMode } from "../../Context/ModeContext";
+import buford1 from "../../assets/buford1.jpg";
+import buford2 from "../../assets/buford2.jpg";
 
 function Home() {
   const {
@@ -18,7 +21,7 @@ function Home() {
     handleReset
   } = useProfiles();
 
-  const { mode, isDark } = useModeContext();
+  const { mode, isDark } = useMode();
 
   const fallbackProfiles = [
     {
@@ -28,7 +31,7 @@ function Home() {
       year: "Junior",
       major: "Toy Destruction",
       isFeatured: true,
-      image: "buford1.jpg"
+      image: buford1
     },
     {
       id: 2,
@@ -37,25 +40,42 @@ function Home() {
       year: "Senior",
       major: "Peanut Butter Consumption",
       isFeatured: false,
-      image: "buford2.jpg"
+      image: buford2
     }
   ];
 
-  const filteredProfiles = profiles.length > 0 ? profiles : fallbackProfiles;
+  const filteredProfiles = useMemo(() => {
+    const allProfilesData = profiles && profiles.length > 0 ? profiles : fallbackProfiles;
+    
+    return allProfilesData
+      .filter(profile => selectedTitle === "All" ? true : profile.title === selectedTitle)
+      .filter(profile => profile.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [profiles, selectedTitle, searchTerm]);
 
   if (loading) {
-    return <div style={{ textAlign: "center", padding: "50px" }}><h2>Loading...</h2></div>;
+    return (
+      <div style={{ textAlign: "center", padding: "50px" }}>
+        <h2>Loading...</h2>
+      </div>
+    );
   }
 
   return (
     <>
       <Introduction />
-      
+
       {error && (
-        <div style={{
-          background: "#f8d7da", color: "#721c24", padding: "15px",
-          margin: "20px 0", borderRadius: "4px", textAlign: "center"
-        }}>
+        <div
+          style={{
+            background: "#f8d7da",
+            color: "#721c24",
+            padding: "15px",
+            margin: "20px 0",
+            borderRadius: "4px",
+            textAlign: "center"
+          }}
+        >
           {error}
         </div>
       )}
@@ -63,15 +83,21 @@ function Home() {
       <Section title={isDark ? "Profiles (Dark Mode)" : "Profiles"}>
         <div className="controls">
           <label className="control-group">
-            <span>Filter by title:</span>
-            <select value={selectedTitle} onChange={(e) => setSelectedTitle(e.target.value)}>
+            <span className="control-label">Filter by title:</span>
+            <select
+              value={selectedTitle}
+              onChange={(e) => setSelectedTitle(e.target.value)}
+            >
               {titles.map((title) => (
-                <option key={title} value={title}>{title}</option>
+                <option key={title} value={title}>
+                  {title}
+                </option>
               ))}
             </select>
           </label>
+
           <label className="control-group">
-            <span>Search by name:</span>
+            <span className="control-label">Search by name:</span>
             <input
               type="text"
               value={searchTerm}
@@ -79,32 +105,27 @@ function Home() {
               placeholder="Type a name..."
             />
           </label>
-          <button className="reset-button" onClick={handleReset}>Reset</button>
+
+          <button className="reset-button" onClick={handleReset}>
+            Reset
+          </button>
         </div>
 
         <div className="cards-grid">
           {filteredProfiles.map((profile) => (
-            <Link 
+            <Card
               key={profile.id || profile.name}
-              to={`/profile/${profile.id}`}
-              className="profile-link"
-              style={{ 
-                textDecoration: "none", 
-                color: "inherit",
-                display: "block"
-              }}
-            >
-              <Card
-                name={profile.name}
-                title={profile.title}
-                year={profile.year}
-                major={profile.major}
-                isFeatured={profile.isFeatured}
-                image={profile.image || "buford1.jpg"}
-                mode={mode}
-              />
-            </Link>
+              name={profile.name}
+              title={profile.title}
+              year={profile.year}
+              major={profile.major}
+              isFeatured={profile.isFeatured}
+              image={profile.image || buford1}
+              mode={mode}
+              profileId={profile.id}
+            />
           ))}
+
           {filteredProfiles.length === 0 && !loading && (
             <p className="no-results">No profiles match your filters.</p>
           )}

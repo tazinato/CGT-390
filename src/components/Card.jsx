@@ -1,17 +1,31 @@
-import { useRef, useLayoutEffect, useState } from "react";
+import { useRef, useLayoutEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import React from 'react';
 
-function Card({ name, title, year, major, isFeatured, image, mode, profileId }) {
+const Card = React.memo(({ 
+  name, 
+  title, 
+  year, 
+  major, 
+  isFeatured, 
+  image, 
+  mode, 
+  profileId 
+}) => {
   const cardRef = useRef(null);
   const [dynamicHeight, setDynamicHeight] = useState("auto");
+
+  const calculateHeight = useCallback((width) => {
+    return Math.max(width * 1.4, 250);
+  }, []);
 
   useLayoutEffect(() => {
     if (cardRef.current) {
       const cardWidth = cardRef.current.offsetWidth;
-      const calculatedHeight = Math.max(cardWidth * 1.4, 250);
+      const calculatedHeight = calculateHeight(cardWidth);
       setDynamicHeight(`${calculatedHeight}px`);
     }
-  }, [mode]); 
+  }, [mode, calculateHeight]);
 
   const isDark = mode === "dark";
 
@@ -29,7 +43,7 @@ function Card({ name, title, year, major, isFeatured, image, mode, profileId }) 
           style={{
             width: "100%",
             height: "100%",
-            objectFit: "cover",  // Keeps image aspect ratio, crops if needed
+            objectFit: "cover",
             objectPosition: "center",
             display: "block"
           }}
@@ -45,6 +59,20 @@ function Card({ name, title, year, major, isFeatured, image, mode, profileId }) 
       </div>
     </Link>
   );
-}
+});
 
-export default Card;
+
+const arePropsEqual = (prevProps, nextProps) => {
+  return (
+    prevProps.name === nextProps.name &&
+    prevProps.title === nextProps.title &&
+    prevProps.year === nextProps.year &&
+    prevProps.major === nextProps.major &&
+    prevProps.isFeatured === nextProps.isFeatured &&
+    prevProps.image === nextProps.image &&
+    prevProps.mode === nextProps.mode &&
+    prevProps.profileId === nextProps.profileId
+  );
+};
+
+export default React.memo(Card, arePropsEqual);

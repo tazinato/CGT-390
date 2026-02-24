@@ -1,103 +1,109 @@
-import { createContext, useContext, useReducer, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const ProfilesContext = createContext();
 
-const profilesReducer = (state, action) => {
-  switch (action.type) {
-    case "SET_LOADING":
-      return { ...state, loading: action.payload };
-    case "SET_ERROR":
-      return { ...state, error: action.payload };
-    case "SET_PROFILES":
-      return { ...state, profiles: action.payload };
-    case "SET_TITLES":
-      return { ...state, titles: ["All", ...action.payload] };
-    case "SET_SELECTED_TITLE":
-      return { ...state, selectedTitle: action.payload };
-    case "SET_SEARCH_TERM":
-      return { ...state, searchTerm: action.payload };
-    case "RESET_FILTERS":
-      return { ...state, selectedTitle: "All", searchTerm: "" };
-    case "ADD_PROFILE":
-      return { 
-        ...state, 
-        profiles: [
-          ...state.profiles,
-          {
-            ...action.payload,
-            id: Date.now(),
-            year: action.payload.year || "N/A",
-            major: action.payload.bio || "N/A",
-            isFeatured: false
-          }
-        ]
-      };
-    default:
-      return state;
-  }
-};
-
 export function ProfilesProvider({ children }) {
-  const [state, dispatch] = useReducer(profilesReducer, {
-    profiles: [],
-    titles: ["All"],
-    selectedTitle: "All",
-    searchTerm: "",
-    loading: true,
-    error: ""
-  });
+  const [profiles, setProfiles] = useState([]);
+  const [titles, setTitles] = useState(["All"]);
+  const [selectedTitle, setSelectedTitle] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchTitles();
+  }, []);
 
   const fetchTitles = () => {
     fetch("https://web.ics.purdue.edu/~zong6/profile-app/get-titles.php")
-      .then(response => response.json())
-      .then(data => {
-        let titles = [];
-        if (data && Array.isArray(data.titles)) titles = data.titles;
-        else if (Array.isArray(data)) titles = data;
-        dispatch({ type: "SET_TITLES", payload: titles });
+      .then((response) => response.json())
+      .then((data) => {
+        let titlesArray = ["All"];
+        if (data && Array.isArray(data.titles)) {
+          titlesArray = ["All", ...data.titles];
+        } else if (Array.isArray(data)) {
+          titlesArray = ["All", ...data];
+        }
+        setTitles(titlesArray);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Error fetching titles:", err);
-        dispatch({ type: "SET_TITLES", payload: [] });
+        setTitles(["All"]);
       });
   };
 
   const fetchProfiles = () => {
-    dispatch({ type: "SET_LOADING", payload: true });
-    dispatch({ type: "SET_ERROR", payload: "" });
+    setLoading(true);
+    setError("");
 
     const params = new URLSearchParams({
-      title: state.selectedTitle === "All" ? "" : state.selectedTitle,
-      name: state.searchTerm,
+      title: selectedTitle === "All" ? "" : selectedTitle,
+      name: searchTerm,
       page: "1",
       limit: "50"
     });
 
-    fetch(`https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`)
-      .then(response => response.json())
-      .then(data => dispatch({ type: "SET_PROFILES", payload: Array.isArray(data) ? data : [] }))
-      .catch(err => {
-        dispatch({ type: "SET_ERROR", payload: "Failed to fetch profiles." });
-        dispatch({ type: "SET_PROFILES", payload: [] });
+    fetch(
+      `https://web.ics.purdue.edu/~zong6/profile-app/fetch-data-with-filter.php?${params}`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        setProfiles(Array.isArray(data) ? data : []);
       })
-      .finally(() => dispatch({ type: "SET_LOADING", payload: false }));
+      .catch((err) => {
+        console.error("Error fetching profiles:", err);
+        setError("Failed to fetch profiles. Please try again.");
+        setProfiles([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
-  useEffect(() => { fetchTitles(); }, []);
-  useEffect(() => { fetchProfiles(); }, [state.selectedTitle, state.searchTerm]);
+  useEffect(() => {
+    fetchProfiles();
+  }, [selectedTitle, searchTerm]);
+
+  const handleReset = () => {
+    setSelectedTitle("All");
+    setSearchTerm("");
+  };
+
+  const handleAddProfile = (profile) => {
+    setProfiles((prev) => {
+      const currentProfiles = Array.isArray(prev) ? prev : [];
+      return [
+        ...currentProfiles,
+        {
+          ...profile,
+          id: Date.now(),
+          year: profile.year || "N/A",
+          major: profile.bio || "N/A",
+          isFeatured: false
+        }
+      ];
+    });
+  };
+
+  const value = {
+    profiles,
+    setProfiles,
+    titles,
+    setTitles,
+    selectedTitle,
+    setSelectedTitle,
+    searchTerm,
+    setSearchTerm,
+    loading,
+    setLoading,
+    error,
+    setError,
+    handleReset,
+    handleAddProfile
+  };
 
   return (
-    <ProfilesContext.Provider value={{
-      state,
-      dispatch,
-      fetchProfiles,
-      actions: {
-        setSelectedTitle: (title) => dispatch({ type: "SET_SELECTED_TITLE", payload: title }),
-        setSearchTerm: (term) => dispatch({ type: "SET_SEARCH_TERM", payload: term }),
-        resetFilters: () => dispatch({ type: "RESET_FILTERS" }),
-        addProfile: (profile) => dispatch({ type: "ADD_PROFILE", payload: profile })
-      }
-    }}>
+    <ProfilesContext.Provider value={value}>
       {children}
     </ProfilesContext.Provider>
   );
