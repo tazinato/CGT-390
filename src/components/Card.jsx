@@ -14,6 +14,7 @@ const Card = React.memo(({
 }) => {
   const cardRef = useRef(null);
   const [dynamicHeight, setDynamicHeight] = useState("auto");
+  const [imgSrc, setImgSrc] = useState(image);
 
   const calculateHeight = useCallback((width) => {
     return Math.max(width * 1.4, 250);
@@ -27,6 +28,10 @@ const Card = React.memo(({
     }
   }, [mode, calculateHeight]);
 
+  const handleImageError = useCallback(() => {
+    setImgSrc("https://via.placeholder.com/300x400/1a2a3a/ffffff?text=No+Image");
+  }, []);
+
   const isDark = mode === "dark";
 
   return (
@@ -38,8 +43,9 @@ const Card = React.memo(({
     >
       <div className="card-image">
         <img 
-          src={image} 
+          src={imgSrc} 
           alt={name} 
+          onError={handleImageError} 
           style={{
             width: "100%",
             height: "100%",
@@ -60,7 +66,6 @@ const Card = React.memo(({
     </Link>
   );
 });
-
 
 const arePropsEqual = (prevProps, nextProps) => {
   return (

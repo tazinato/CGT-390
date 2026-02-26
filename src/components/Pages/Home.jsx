@@ -1,28 +1,16 @@
 import { Link } from "react-router-dom";
-import { useMemo } from "react";
 import Section from "../Section";
 import Card from "../Card";
 import Introduction from "../Introduction";
-import { useProfiles } from "../../Context/ProfilesContext";
 import { useMode } from "../../Context/ModeContext";
-import buford1 from "../../assets/buford1.jpg";
-import buford2 from "../../assets/buford2.jpg";
+import { useProfilesData } from "../../hooks/useProfilesData";
+import { useProfileFilters } from "../../hooks/useProfileFilters";
+import buford1 from "../../assets/buford1.jpg";  // ✅ Added back
+import buford2 from "../../assets/buford2.jpg";  // ✅ Added back
 
 function Home() {
-  const {
-    profiles,
-    titles,
-    selectedTitle,
-    setSelectedTitle,
-    searchTerm,
-    setSearchTerm,
-    loading,
-    error,
-    handleReset
-  } = useProfiles();
-
   const { mode, isDark } = useMode();
-
+  
   const fallbackProfiles = [
     {
       id: 1,
@@ -31,27 +19,34 @@ function Home() {
       year: "Junior",
       major: "Toy Destruction",
       isFeatured: true,
-      image: buford1
+      image: buford1,  // ✅ Imported module
     },
     {
       id: 2,
       name: "Buford, Son of Buford",
       title: "Alumni",
-      year: "Senior",
+      year: "Senior", 
       major: "Peanut Butter Consumption",
       isFeatured: false,
-      image: buford2
-    }
+      image: buford2,  // ✅ Imported module
+    },
   ];
 
-  const filteredProfiles = useMemo(() => {
-    const allProfilesData = profiles && profiles.length > 0 ? profiles : fallbackProfiles;
-    
-    return allProfilesData
-      .filter(profile => selectedTitle === "All" ? true : profile.title === selectedTitle)
-      .filter(profile => profile.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [profiles, selectedTitle, searchTerm]);
+  const { profiles, titles, loading, error, handleReset } = useProfilesData();
+
+  const {
+    selectedTitle,
+    setSelectedTitle,
+    searchTerm,
+    setSearchTerm,
+    filteredProfiles,
+    resetFilters,
+  } = useProfileFilters(profiles, fallbackProfiles);
+
+  const handleFullReset = () => {
+    resetFilters();
+    handleReset();
+  };
 
   if (loading) {
     return (
@@ -73,7 +68,7 @@ function Home() {
             padding: "15px",
             margin: "20px 0",
             borderRadius: "4px",
-            textAlign: "center"
+            textAlign: "center",
           }}
         >
           {error}
@@ -88,6 +83,7 @@ function Home() {
               value={selectedTitle}
               onChange={(e) => setSelectedTitle(e.target.value)}
             >
+              <option value="All">All</option>
               {titles.map((title) => (
                 <option key={title} value={title}>
                   {title}
@@ -106,7 +102,7 @@ function Home() {
             />
           </label>
 
-          <button className="reset-button" onClick={handleReset}>
+          <button className="reset-button" onClick={handleFullReset}>
             Reset
           </button>
         </div>
@@ -120,7 +116,7 @@ function Home() {
               year={profile.year}
               major={profile.major}
               isFeatured={profile.isFeatured}
-              image={profile.image || buford1}
+              image={profile.image} 
               mode={mode}
               profileId={profile.id}
             />
